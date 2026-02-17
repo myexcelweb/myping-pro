@@ -1,18 +1,29 @@
+import json
+import os
 from flask import Flask, render_template, request, redirect, jsonify
 import requests
 
 app = Flask(__name__)
 
-# List of websites to monitor
-websites = []
-next_id = 1  # Auto-increment ID
+DATA_FILE = "websites.json"
 
-# Home page - show all websites
+# Load websites from file
+if os.path.exists(DATA_FILE):
+    with open(DATA_FILE, "r") as f:
+        websites = json.load(f)
+else:
+    websites = []
+
+next_id = max([w["id"] for w in websites], default=0) + 1
+
+def save_websites():
+    with open(DATA_FILE, "w") as f:
+        json.dump(websites, f, indent=4)
+
 @app.route("/")
 def index():
     return render_template("index.html", websites=websites)
 
-# Add new website
 @app.route("/add", methods=["POST"])
 def add_website():
     global next_id
@@ -24,32 +35,29 @@ def add_website():
             "status": "Checking"
         })
         next_id += 1
+        save_websites()
     return redirect("/")
 
-# Delete website
 @app.route("/delete/<int:site_id>")
 def delete_website(site_id):
     global websites
     websites = [w for w in websites if w["id"] != site_id]
+    save_websites()
     return redirect("/")
 
-# Ping a website (manual or API ping)
 @app.route("/ping/<int:site_id>", methods=["GET"])
 def ping_website(site_id):
     site = next((w for w in websites if w["id"] == site_id), None)
     if site:
         try:
             response = requests.get(site["url"], timeout=5)
-            if response.status_code == 200:
-                site["status"] = "UP"
-            else:
-                site["status"] = "DOWN"
+            site["status"] = "UP" if response.status_code == 200 else "DOWN"
         except:
             site["status"] = "DOWN"
+        save_websites()
         return jsonify({"status": site["status"]})
     return jsonify({"status": "Unknown"})
 
-# Optional: endpoint to ping all websites (for GitHub Actions or cron)
 @app.route("/run-check", methods=["GET"])
 def run_check():
     for site in websites:
@@ -58,9 +66,9 @@ def run_check():
             site["status"] = "UP" if response.status_code == 200 else "DOWN"
         except:
             site["status"] = "DOWN"
+    save_websites()
     return "All websites checked!"
 
-# Run app
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
