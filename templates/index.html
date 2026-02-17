@@ -1,39 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Ping Monitor</title>
+    <meta charset="UTF-8">
+    <title>MyPing-Pro - Website Monitor</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #333;
+            color: white;
+        }
+
+        .up {
+            color: green;
+            font-weight: bold;
+        }
+
+        .down {
+            color: red;
+            font-weight: bold;
+        }
+
+        .checking {
+            color: orange;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 300px;
+            padding: 5px;
+        }
+
+        button {
+            padding: 5px 10px;
+            margin: 2px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
 
-    <h2>🌍 Personal Ping Monitor</h2>
+    <h1>MyPing-Pro - Website Monitor</h1>
 
-    <form method="POST" action="/add">
+    <!-- Add New Website -->
+    <form action="/add" method="POST">
         <input type="text" name="url" placeholder="https://example.com" required>
         <button type="submit">Add Website</button>
     </form>
 
-    <table>
+    <!-- Websites Table -->
+    <table id="websites-table">
         <tr>
             <th>ID</th>
             <th>URL</th>
             <th>Status</th>
             <th>Action</th>
         </tr>
-
-        {% for site in sites %}
-        <tr>
-            <td>{{ site[0] }}</td>
-            <td>{{ site[1] }}</td>
-            <td class="{{ site[2] }}">{{ site[2] }}</td>
+        {% for site in websites %}
+        <tr data-id="{{ site.id }}">
+            <td>{{ site.id }}</td>
+            <td>{{ site.url }}</td>
+            <td class="status checking">{{ site.status }}</td>
             <td>
-                <a href="/delete/{{ site[0] }}">Delete</a>
+                <button class="ping-btn">Ping</button>
+                <a href="/delete/{{ site.id }}"><button type="button">Delete</button></a>
             </td>
         </tr>
         {% endfor %}
     </table>
+
+    <script>
+        // Function to ping a single website
+        function pingSite(row) {
+            const siteId = row.dataset.id;
+            const statusCell = row.querySelector(".status");
+
+            statusCell.innerText = "Checking...";
+            statusCell.className = "status checking";
+
+            fetch(`/ping/${siteId}`)
+                .then(res => res.json())
+                .then(data => {
+                    statusCell.innerText = data.status;
+                    statusCell.className = "status " + (data.status === "UP" ? "up" : "down");
+                })
+                .catch(err => {
+                    statusCell.innerText = "DOWN";
+                    statusCell.className = "status down";
+                });
+        }
+
+        // Attach manual ping buttons
+        document.querySelectorAll(".ping-btn").forEach(btn => {
+            btn.addEventListener("click", e => {
+                const row = e.target.closest("tr");
+                pingSite(row);
+            });
+        });
+
+        // Optional: auto ping all websites every 1 minute
+        setInterval(() => {
+            document.querySelectorAll("#websites-table tr[data-id]").forEach(row => {
+                pingSite(row);
+            });
+        }, 60000); // 60000ms = 1 minute
+    </script>
 
 </body>
 

@@ -1,108 +1,67 @@
-import os
-import sqlite3
+from flask import Flask, render_template, request, redirect, jsonify
 import requests
-from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-DATABASE = "database/models.db"
-SECRET_KEY = "mysecret123"  # change this
+# List of websites to monitor
+websites = []
+next_id = 1  # Auto-increment ID
 
-
-# -----------------------------
-# Create database if not exists
-# -----------------------------
-def init_db():
-    if not os.path.exists("database"):
-        os.makedirs("database")
-
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS sites (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            url TEXT NOT NULL,
-            status TEXT DEFAULT 'Unknown'
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-
-init_db()
-
-
-# -----------------------------
-# Home Page
-# -----------------------------
+# Home page - show all websites
 @app.route("/")
 def index():
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM sites")
-    sites = cur.fetchall()
-    conn.close()
-    return render_template("index.html", sites=sites)
+    return render_template("index.html", websites=websites)
 
-
-# -----------------------------
-# Add Website
-# -----------------------------
+# Add new website
 @app.route("/add", methods=["POST"])
-def add_site():
-    url = request.form["url"]
-
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    cur.execute("INSERT INTO sites (url, status) VALUES (?, ?)", (url, "Checking"))
-    conn.commit()
-    conn.close()
-
+def add_website():
+    global next_id
+    url = request.form.get("url")
+    if url:
+        websites.append({
+            "id": next_id,
+            "url": url,
+            "status": "Checking"
+        })
+        next_id += 1
     return redirect("/")
 
-
-# -----------------------------
-# Delete Website
-# -----------------------------
+# Delete website
 @app.route("/delete/<int:site_id>")
-def delete_site(site_id):
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM sites WHERE id=?", (site_id,))
-    conn.commit()
-    conn.close()
-
+def delete_website(site_id):
+    global websites
+    websites = [w for w in websites if w["id"] != site_id]
     return redirect("/")
 
-
-# -----------------------------
-# Run Check (Called by GitHub)
-# -----------------------------
-@app.route("/run-check")
-def run_check():
-    key = request.args.get("key")
-    if key != SECRET_KEY:
-        return "Unauthorized", 403
-
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    cur.execute("SELECT id, url FROM sites")
-    sites = cur.fetchall()
-
-    for site_id, url in sites:
+# Ping a website (manual or API ping)
+@app.route("/ping/<int:site_id>", methods=["GET"])
+def ping_website(site_id):
+    site = next((w for w in websites if w["id"] == site_id), None)
+    if site:
         try:
-            r = requests.get(url, timeout=5)
-            status = "UP" if r.status_code == 200 else "DOWN"
+            response = requests.get(site["url"], timeout=5)
+            if response.status_code == 200:
+                site["status"] = "UP"
+            else:
+                site["status"] = "DOWN"
         except:
-            status = "DOWN"
+            site["status"] = "DOWN"
+        return jsonify({"status": site["status"]})
+    return jsonify({"status": "Unknown"})
 
-        cur.execute("UPDATE sites SET status=? WHERE id=?", (status, site_id))
+# Optional: endpoint to ping all websites (for GitHub Actions or cron)
+@app.route("/run-check", methods=["GET"])
+def run_check():
+    for site in websites:
+        try:
+            response = requests.get(site["url"], timeout=5)
+            site["status"] = "UP" if response.status_code == 200 else "DOWN"
+        except:
+            site["status"] = "DOWN"
+    return "All websites checked!"
 
-    conn.commit()
-    conn.close()
-
-    return "Checked Successfully"
-
-
+# Run app
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
