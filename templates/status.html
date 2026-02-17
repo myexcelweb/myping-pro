@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<title>MyPing Pro — System Status</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c10;--surface:#0d1117;--border:#21262d;--up:#00ff88;--down:#ff3860;--accent:#00c8ff;--text:#e6edf3;--muted:#6e7681;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,200,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.03) 1px,transparent 1px);
+  background-size:40px 40px;}
+.wrap{max-width:760px;margin:0 auto;padding:48px 20px;position:relative;z-index:1;}
+
+header{text-align:center;margin-bottom:40px;}
+.logo{font-size:28px;font-weight:800;}
+.logo span{color:var(--accent);text-shadow:0 0 20px rgba(0,200,255,.6);}
+.tagline{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:6px;}
+
+/* Overall banner */
+.overall{border-radius:14px;padding:20px 24px;margin-bottom:32px;display:flex;align-items:center;gap:14px;font-weight:700;font-size:16px;}
+.overall.all-up{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.3);color:var(--up);}
+.overall.has-down{background:rgba(255,56,96,.08);border:1px solid rgba(255,56,96,.3);color:var(--down);}
+.overall-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.overall.all-up .overall-dot{background:var(--up);box-shadow:0 0 10px var(--up);animation:pulse 2s infinite;}
+.overall.has-down .overall-dot{background:var(--down);box-shadow:0 0 10px var(--down);}
+.overall-sub{font-family:'Space Mono',monospace;font-size:10px;font-weight:400;color:var(--muted);margin-left:auto;}
+
+/* Site rows */
+.site-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:10px;transition:border-color .3s;}
+.site-row.is-up{border-color:rgba(0,255,136,.18);}
+.site-row.is-down{border-color:rgba(255,56,96,.35);}
+.row-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.row-url{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.badge{padding:3px 11px;border-radius:999px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;}
+.badge.UP{background:rgba(0,255,136,.1);color:var(--up);border:1px solid rgba(0,255,136,.25);}
+.badge.DOWN{background:rgba(255,56,96,.1);color:var(--down);border:1px solid rgba(255,56,96,.25);}
+.badge.Unknown{background:rgba(110,118,129,.1);color:var(--muted);border:1px solid rgba(110,118,129,.2);}
+.row-meta{display:flex;gap:20px;flex-wrap:wrap;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:10px;}
+.row-meta span{color:var(--text);}
+.row-meta span.green{color:var(--up);}
+.row-meta span.red{color:var(--down);}
+
+/* History bar */
+.bar-label{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:5px;display:flex;justify-content:space-between;}
+.history-bar{display:flex;gap:2px;height:16px;}
+.hb-seg{flex:1;border-radius:2px;min-width:3px;}
+.hb-seg.UP{background:var(--up);}
+.hb-seg.DOWN{background:var(--down);}
+.hb-seg.empty{background:var(--border);}
+
+.footer{text-align:center;margin-top:36px;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);}
+.footer a{color:var(--accent);text-decoration:none;}
+.footer span{color:var(--accent);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">MyPing<span>Pro</span></div>
+    <div class="tagline">SYSTEM STATUS PAGE</div>
+  </header>
+
+  {% set all_up = sites|selectattr('status','equalto','UP')|list|length == sites|length and sites|length > 0 %}
+
+  <div class="overall {{ 'all-up' if all_up else 'has-down' }}">
+    <div class="overall-dot"></div>
+    {{ 'All Systems Operational' if all_up else 'Some Systems Are Down' }}
+    <div class="overall-sub">Auto-refreshes every 60s</div>
+  </div>
+
+  {% for site in sites %}
+  {% set segs = site.history[-30:] %}
+  {% set up_count = site.history|selectattr('status','equalto','UP')|list|length %}
+  {% set total = site.history|length %}
+  <div class="site-row {{ 'is-up' if site.status == 'UP' else 'is-down' if site.status == 'DOWN' else '' }}">
+    <div class="row-top">
+      <div class="row-url">{{ site.name or site.url }}</div>
+      <span class="badge {{ site.status }}">{{ site.status }}</span>
+    </div>
+    <div class="row-meta">
+      <div>📊 Uptime: <span class="{{ 'green' if site.uptime_pct >= 99 else 'red' if site.uptime_pct < 90 else '' }}">{{ site.uptime_pct }}%</span></div>
+      <div>🕐 Last check: <span>{{ site.last_ping or '—' }} UTC</span></div>
+    </div>
+    <div class="bar-label"><span>Last 30 checks</span><span>{{ site.uptime_pct }}% uptime</span></div>
+    <div class="history-bar">
+      {% for i in range(30) %}
+        {% if i < segs|length %}
+          <div class="hb-seg {{ segs[i].status }}" title="{{ segs[i].status }} @ {{ segs[i].time }}"></div>
+        {% else %}
+          <div class="hb-seg empty"></div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="footer">
+    <div>Powered by <a href="/">MyPing Pro</a> &nbsp;·&nbsp; Designed &amp; Developed by <span>Parimal Hodar</span></div>
+  </div>
+</div>
+</body>
+</html>

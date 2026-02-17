@@ -3,159 +3,819 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>MyPing-Pro - Website Monitor</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MyPing Pro — Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --bg: #080c10;
+            --surface: #0d1117;
+            --surface2: #161b22;
+            --border: #21262d;
+            --up: #00ff88;
+            --down: #ff3860;
+            --checking: #ffb300;
+            --paused: #6e7681;
+            --accent: #00c8ff;
+            --text: #e6edf3;
+            --muted: #6e7681;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f2f2f2;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            min-height: 100vh;
         }
 
-        h1 {
-            text-align: center;
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image: linear-gradient(rgba(0, 200, 255, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 200, 255, .03) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 36px 20px;
+            position: relative;
+            z-index: 1;
         }
 
-        th,
-        td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 36px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        th {
-            background: #333;
-            color: white;
+        .logo-title {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -.5px;
         }
 
-        .up {
-            color: green;
-            font-weight: bold;
+        .logo-title span {
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(0, 200, 255, .6);
         }
 
-        .down {
-            color: red;
-            font-weight: bold;
+        .logo-sub {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
         }
 
-        .checking {
-            color: orange;
-            font-weight: bold;
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        input[type="text"] {
-            width: 300px;
-            padding: 5px;
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(0, 255, 136, .08);
+            border: 1px solid rgba(0, 255, 136, .2);
+            border-radius: 999px;
+            padding: 5px 13px;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: var(--up);
+            letter-spacing: 1.5px;
         }
 
-        button {
-            padding: 5px 10px;
-            margin: 2px;
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--up);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .btn-status-page {
+            background: rgba(0, 200, 255, .1);
+            border: 1px solid rgba(0, 200, 255, .25);
+            color: var(--accent);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
             cursor: pointer;
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: all .2s;
+        }
+
+        .btn-status-page:hover {
+            background: rgba(0, 200, 255, .2);
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 16px 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent);
+            opacity: .5;
+        }
+
+        .stat-card.up-card::before {
+            background: var(--up);
+        }
+
+        .stat-card.down-card::before {
+            background: var(--down);
+        }
+
+        .stat-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 7px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .stat-value.green {
+            color: var(--up);
+        }
+
+        .stat-value.red {
+            color: var(--down);
+        }
+
+        .stat-value.blue {
+            color: var(--accent);
+        }
+
+        .add-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .add-form input {
+            flex: 1;
+            min-width: 200px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 11px 15px;
+            color: var(--text);
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .add-form input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 200, 255, .1);
+        }
+
+        .add-form input::placeholder {
+            color: var(--muted);
+        }
+
+        .btn-add {
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            border-radius: 10px;
+            padding: 11px 22px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 200, 255, .3);
+            transition: all .2s;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            opacity: .9;
+        }
+
+        .monitors {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .monitor-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: border-color .3s;
+        }
+
+        .monitor-card.is-down {
+            border-color: rgba(255, 56, 96, .4);
+        }
+
+        .monitor-card.is-up {
+            border-color: rgba(0, 255, 136, .18);
+        }
+
+        .monitor-card.is-paused {
+            opacity: .55;
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: background .4s;
+        }
+
+        .status-dot.UP {
+            background: var(--up);
+            box-shadow: 0 0 8px var(--up);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.DOWN {
+            background: var(--down);
+            box-shadow: 0 0 8px var(--down);
+        }
+
+        .status-dot.Checking {
+            background: var(--checking);
+            animation: pulse .8s infinite;
+        }
+
+        .status-dot.Paused,
+        .status-dot.Unknown {
+            background: var(--paused);
+        }
+
+        .site-url {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            color: var(--accent);
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .site-url a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .site-url a:hover {
+            text-decoration: underline;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .badge.UP {
+            background: rgba(0, 255, 136, .1);
+            color: var(--up);
+            border: 1px solid rgba(0, 255, 136, .25);
+        }
+
+        .badge.DOWN {
+            background: rgba(255, 56, 96, .1);
+            color: var(--down);
+            border: 1px solid rgba(255, 56, 96, .25);
+        }
+
+        .badge.Checking {
+            background: rgba(255, 179, 0, .1);
+            color: var(--checking);
+            border: 1px solid rgba(255, 179, 0, .2);
+        }
+
+        .badge.Paused,
+        .badge.Unknown {
+            background: rgba(110, 118, 129, .1);
+            color: var(--paused);
+            border: 1px solid rgba(110, 118, 129, .2);
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding: 0 18px 10px;
+        }
+
+        .meta-item {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .meta-item .val {
+            color: var(--text);
+        }
+
+        .meta-item .val.green {
+            color: var(--up);
+        }
+
+        .meta-item .val.red {
+            color: var(--down);
+        }
+
+        .card-bar {
+            padding: 0 18px 10px;
+        }
+
+        .bar-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .history-bar {
+            display: flex;
+            gap: 2px;
+            height: 20px;
+        }
+
+        .hb-seg {
+            flex: 1;
+            border-radius: 2px;
+            min-width: 3px;
+            cursor: default;
+            transition: opacity .2s;
+        }
+
+        .hb-seg:hover {
+            opacity: .7;
+        }
+
+        .hb-seg.UP {
+            background: var(--up);
+        }
+
+        .hb-seg.DOWN {
+            background: var(--down);
+        }
+
+        .hb-seg.empty {
+            background: var(--border);
+        }
+
+        .card-bottom {
+            padding: 0 18px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .countdown-wrap {
+            flex: 1;
+        }
+
+        .countdown-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: var(--muted);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .countdown-track {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .countdown-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s linear, background .5s;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .btn-action {
+            border-radius: 7px;
+            padding: 5px 11px;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all .2s;
+            border: 1px solid;
+            white-space: nowrap;
+            background: transparent;
+        }
+
+        .btn-ping-now {
+            border-color: rgba(0, 200, 255, .25);
+            color: var(--accent);
+        }
+
+        .btn-ping-now:hover {
+            background: rgba(0, 200, 255, .12);
+        }
+
+        .btn-pause {
+            border-color: rgba(255, 179, 0, .25);
+            color: var(--checking);
+        }
+
+        .btn-pause:hover {
+            background: rgba(255, 179, 0, .1);
+        }
+
+        .btn-resume {
+            border-color: rgba(0, 255, 136, .25);
+            color: var(--up);
+        }
+
+        .btn-resume:hover {
+            background: rgba(0, 255, 136, .1);
+        }
+
+        .btn-del {
+            border-color: rgba(255, 56, 96, .2);
+            color: var(--down);
+        }
+
+        .btn-del:hover {
+            background: rgba(255, 56, 96, .1);
+        }
+
+        .empty {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .footer {
+            margin-top: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .footer-txt {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .footer-txt span {
+            color: var(--accent);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 22px;
+            right: 22px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--text);
+            z-index: 9999;
+            transform: translateY(70px);
+            opacity: 0;
+            transition: transform .3s, opacity .3s;
+            max-width: 280px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.t-up {
+            border-left: 3px solid var(--up);
+        }
+
+        .toast.t-down {
+            border-left: 3px solid var(--down);
+        }
+
+        .toast.t-info {
+            border-left: 3px solid var(--accent);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.75);
+            }
         }
     </style>
 </head>
 
 <body>
+    <div class="wrap">
 
-    <h1>MyPing-Pro - Website Monitor</h1>
+        <header>
+            <div>
+                <div class="logo-title">MyPing<span>Pro</span></div>
+                <div class="logo-sub">Website Uptime Monitor</div>
+            </div>
+            <div class="header-right">
+                <div class="live-badge">
+                    <div class="live-dot"></div>LIVE
+                </div>
+                <a class="btn-status-page" href="/status" target="_blank">🌐 Status Page</a>
+            </div>
+        </header>
 
-    <!-- Add New Website -->
-    <form action="/add" method="POST">
-        <input type="text" name="url" placeholder="https://example.com" required>
-        <button type="submit">Add Website</button>
-    </form>
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-label">Total</div>
+                <div class="stat-value blue" id="s-total">0</div>
+            </div>
+            <div class="stat-card up-card">
+                <div class="stat-label">Online</div>
+                <div class="stat-value green" id="s-up">0</div>
+            </div>
+            <div class="stat-card down-card">
+                <div class="stat-label">Offline</div>
+                <div class="stat-value red" id="s-down">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Uptime</div>
+                <div class="stat-value blue" id="s-uptime">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Paused</div>
+                <div class="stat-value blue" id="s-paused">0</div>
+            </div>
+        </div>
 
-    <!-- Websites Table -->
-    <table id="websites-table">
-        <tr>
-            <th>ID</th>
-            <th>URL</th>
-            <th>Status</th>
-            <th>Next Ping</th>
-            <th>Action</th>
-        </tr>
-        {% for site in websites %}
-        <tr data-id="{{ site.id }}">
-            <td>{{ site.id }}</td>
-            <td>{{ site.url }}</td>
-            <td class="status checking">{{ site.status }}</td>
-            <td class="countdown">--:--</td>
-            <td>
-                <button class="ping-btn">Ping</button>
-                <a href="/delete/{{ site.id }}"><button type="button">Delete</button></a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+        <form class="add-form" onsubmit="addSite(event)">
+            <input id="url-input" type="text" placeholder="https://example.com" required autocomplete="off">
+            <button type="submit" class="btn-add">+ Add Monitor</button>
+        </form>
+
+        <div class="monitors" id="monitors">
+            <div class="empty">
+                <div style="font-size:36px;opacity:.3;margin-bottom:10px;">📡</div>
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);">No monitors yet. Add
+                    a URL above.</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-txt">System time: <span id="sys-clock">--:--:--</span></div>
+            <div class="footer-txt">Auto-ping every <span>5 min</span></div>
+            <div class="footer-txt">Designed &amp; Developed by <span>Parimal Hodar</span></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
 
     <script>
-        // Ping interval in seconds
-        const PING_INTERVAL = 300; // 5 minutes
-        let timers = {};
+        const PING_INTERVAL = 300;
+        let prevStatuses = {};
 
-        // Initialize timers for each site
-        document.querySelectorAll("#websites-table tr[data-id]").forEach(row => {
-            const siteId = row.dataset.id;
-            timers[siteId] = PING_INTERVAL;
-        });
-
-        // Function to ping a website
-        function pingSite(row) {
-            const siteId = row.dataset.id;
-            const statusCell = row.querySelector(".status");
-            statusCell.innerText = "Checking...";
-            statusCell.className = "status checking";
-
-            fetch(`/ping/${siteId}`)
-                .then(res => res.json())
-                .then(data => {
-                    statusCell.innerText = data.status;
-                    statusCell.className = "status " + (data.status === "UP" ? "up" : "down");
-                    timers[siteId] = PING_INTERVAL; // reset countdown after ping
-                })
-                .catch(err => {
-                    statusCell.innerText = "DOWN";
-                    statusCell.className = "status down";
-                    timers[siteId] = PING_INTERVAL;
-                });
+        function toast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast show t-${type}`;
+            clearTimeout(t._x);
+            t._x = setTimeout(() => t.className = 'toast', 3000);
         }
 
-        // Attach manual ping buttons
-        document.querySelectorAll(".ping-btn").forEach(btn => {
-            btn.addEventListener("click", e => {
-                const row = e.target.closest("tr");
-                pingSite(row);
-            });
-        });
+        function tickClock() {
+            document.getElementById('sys-clock').textContent = new Date().toLocaleTimeString();
+        }
 
-        // Countdown timer and auto ping
-        setInterval(() => {
-            document.querySelectorAll("#websites-table tr[data-id]").forEach(row => {
-                const siteId = row.dataset.id;
-                const countdownCell = row.querySelector(".countdown");
+        function updateStats(sites) {
+            const active = sites.filter(s => !s.paused);
+            const up = active.filter(s => s.status === 'UP').length;
+            const down = active.filter(s => s.status === 'DOWN').length;
+            const paused = sites.filter(s => s.paused).length;
+            const avg = active.length ? (active.reduce((a, s) => a + s.uptime_pct, 0) / active.length).toFixed(1) + '%' : '—';
+            document.getElementById('s-total').textContent = sites.length;
+            document.getElementById('s-up').textContent = up;
+            document.getElementById('s-down').textContent = down;
+            document.getElementById('s-uptime').textContent = avg;
+            document.getElementById('s-paused').textContent = paused;
+        }
 
-                if (!timers[siteId]) timers[siteId] = PING_INTERVAL;
+        function fmt(sec) {
+            return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0');
+        }
 
-                timers[siteId]--;
+        function lastPingFmt(site) {
+            if (!site.last_ping) return '—';
+            return new Date(site.last_ping + ' UTC').toLocaleTimeString();
+        }
 
-                let minutes = Math.floor(timers[siteId] / 60);
-                let seconds = timers[siteId] % 60;
-                countdownCell.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        function historyBar(history) {
+            const segs = Array(30).fill('empty');
+            history.slice(-30).forEach((h, i) => { segs[i] = h.status; });
+            return segs.map((s, i) => {
+                const h = history.slice(-30)[i];
+                const tip = h ? `${h.status}${h.ms ? ' · ' + h.ms + 'ms' : ''} @ ${h.time}` : 'No data';
+                return `<div class="hb-seg ${s}" title="${tip}"></div>`;
+            }).join('');
+        }
 
-                if (timers[siteId] <= 0) {
-                    pingSite(row); // auto ping
+        function render(sites) {
+            const wrap = document.getElementById('monitors');
+            if (!sites.length) {
+                wrap.innerHTML = '<div class="empty"><div style="font-size:36px;opacity:.3;margin-bottom:10px;">📡</div><div style="font-family:Space Mono,monospace;font-size:12px;color:var(--muted);">No monitors yet. Add a URL above.</div></div>';
+                return;
+            }
+
+            const existing = new Set([...wrap.querySelectorAll('.monitor-card')].map(el => +el.dataset.id));
+            const incoming = new Set(sites.map(s => s.id));
+            existing.forEach(id => { if (!incoming.has(id)) document.getElementById('mc-' + id)?.remove(); });
+
+            sites.forEach(site => {
+                const st = site.paused ? 'Paused' : site.status;
+                const cc = site.paused ? 'is-paused' : site.status === 'DOWN' ? 'is-down' : site.status === 'UP' ? 'is-up' : '';
+                const pct = site.paused ? 0 : Math.min(100, (site.next_ping_in / PING_INTERVAL) * 100);
+                const ms = site.response_time ? site.response_time + 'ms' : '—';
+                const upC = site.uptime_pct >= 99 ? 'green' : site.uptime_pct >= 90 ? '' : 'red';
+                const cFill = pct < 20 ? 'var(--checking)' : 'var(--accent)';
+
+                if (!existing.has(site.id)) {
+                    const div = document.createElement('div');
+                    div.className = `monitor-card ${cc}`;
+                    div.id = `mc-${site.id}`;
+                    div.dataset.id = site.id;
+                    div.innerHTML = `
+        <div class="card-top">
+          <div class="status-dot ${st}"></div>
+          <div class="site-url"><a href="${site.url}" target="_blank">${site.url.replace(/https?:\/\//, '')}</a></div>
+          <span class="badge ${st}">${st}</span>
+        </div>
+        <div class="card-meta">
+          <div class="meta-item">⚡ Response: <span class="val resp-ms">${ms}</span></div>
+          <div class="meta-item">📊 Uptime: <span class="val uptime-val ${upC}">${site.uptime_pct.toFixed(1)}%</span></div>
+          <div class="meta-item">🕐 Last ping: <span class="val last-val">${lastPingFmt(site)}</span></div>
+        </div>
+        <div class="card-bar">
+          <div class="bar-label"><span>Last 30 pings</span><span>${site.uptime_pct.toFixed(1)}% uptime</span></div>
+          <div class="history-bar">${historyBar(site.history)}</div>
+        </div>
+        <div class="card-bottom">
+          <div class="countdown-wrap">
+            <div class="countdown-label"><span>Next ping in</span><span class="cd-time">${site.paused ? 'Paused' : fmt(Math.max(0, site.next_ping_in))}</span></div>
+            <div class="countdown-track"><div class="countdown-fill" style="width:${pct}%;background:${cFill}"></div></div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-action btn-ping-now" onclick="manualPing(${site.id})">⚡ Ping</button>
+            <button class="btn-action ${site.paused ? 'btn-resume' : 'btn-pause'} btn-pt" onclick="togglePause(${site.id})">${site.paused ? '▶ Resume' : '⏸ Pause'}</button>
+            <button class="btn-action btn-del" onclick="deleteSite(${site.id})">✕</button>
+          </div>
+        </div>`;
+                    wrap.appendChild(div);
+                } else {
+                    const el = document.getElementById('mc-' + site.id);
+                    el.className = `monitor-card ${cc}`;
+                    el.querySelector('.status-dot').className = `status-dot ${st}`;
+                    el.querySelector('.badge').className = `badge ${st}`;
+                    el.querySelector('.badge').textContent = st;
+                    el.querySelector('.resp-ms').textContent = ms;
+                    const uv = el.querySelector('.uptime-val');
+                    uv.className = `val uptime-val ${upC}`;
+                    uv.textContent = site.uptime_pct.toFixed(1) + '%';
+                    el.querySelector('.last-val').textContent = lastPingFmt(site);
+                    el.querySelector('.history-bar').innerHTML = historyBar(site.history);
+                    el.querySelector('.cd-time').textContent = site.paused ? 'Paused' : fmt(Math.max(0, site.next_ping_in));
+                    const cf = el.querySelector('.countdown-fill');
+                    cf.style.width = pct + '%';
+                    cf.style.background = cFill;
+                    const pb = el.querySelector('.btn-pt');
+                    pb.className = `btn-action ${site.paused ? 'btn-resume' : 'btn-pause'} btn-pt`;
+                    pb.textContent = site.paused ? '▶ Resume' : '⏸ Pause';
                 }
-            });
-        }, 1000); // every 1 second
-    </script>
 
+                if (prevStatuses[site.id] !== undefined && prevStatuses[site.id] !== site.status && !['Checking', 'Unknown'].includes(site.status)) {
+                    toast(`${site.url.replace(/https?:\/\//, '')} is now ${site.status}`, site.status === 'UP' ? 'up' : 'down');
+                }
+                prevStatuses[site.id] = site.status;
+            });
+        }
+
+        function poll() {
+            fetch('/state').then(r => r.json()).then(sites => {
+                render(sites); updateStats(sites); tickClock();
+            }).catch(() => { });
+        }
+        setInterval(poll, 1000);
+        poll();
+
+        function addSite(e) {
+            e.preventDefault();
+            let url = document.getElementById('url-input').value.trim();
+            if (!url) return;
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            document.getElementById('url-input').value = '';
+            fetch('/add', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `url=${encodeURIComponent(url)}` })
+                .then(r => r.json()).then(d => { d.error ? toast(d.error, 'down') : toast('Monitor added!', 'info'); });
+        }
+
+        function manualPing(id) {
+            toast('Pinging...', 'info');
+            fetch(`/ping/${id}`).then(r => r.json()).then(d => {
+                toast(`${d.status}${d.response_time ? ' · ' + d.response_time + 'ms' : ''}`, d.status === 'UP' ? 'up' : 'down');
+            });
+        }
+
+        function togglePause(id) {
+            fetch(`/pause/${id}`, { method: 'POST' }).then(r => r.json()).then(d => {
+                toast(d.paused ? 'Monitor paused' : 'Monitor resumed', 'info');
+            });
+        }
+
+        function deleteSite(id) {
+            if (!confirm('Delete this monitor?')) return;
+            fetch(`/delete/${id}`, { method: 'POST' }).then(() => { delete prevStatuses[id]; toast('Deleted', 'info'); });
+        }
+    </script>
 </body>
 
 </html>
