@@ -10,6 +10,9 @@ if not exist ".git" (
     git remote add origin https://github.com/myexcelweb/myping-pro.git
 )
 
+:: Pull remote changes first to avoid conflicts
+git pull origin main --rebase
+
 :: Add all files
 git add .
 
@@ -17,7 +20,7 @@ git add .
 for /f %%i in ('powershell -command "Get-Date -Format \"yyyy-MM-dd HH:mm:ss\""') do set datetime=%%i
 git commit -m "Auto update %datetime%"
 
-:: Push
-git push -u origin main
+:: Push to remote
+git push origin main
 
 exit
