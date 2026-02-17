@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ping Monitor</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <h2>🌍 Personal Ping Monitor</h2>
+
+    <form method="POST" action="/add">
+        <input type="text" name="url" placeholder="https://example.com" required>
+        <button type="submit">Add Website</button>
+    </form>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>URL</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+
+        {% for site in sites %}
+        <tr>
+            <td>{{ site[0] }}</td>
+            <td>{{ site[1] }}</td>
+            <td class="{{ site[2] }}">{{ site[2] }}</td>
+            <td>
+                <a href="/delete/{{ site[0] }}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</body>
+
+</html>
