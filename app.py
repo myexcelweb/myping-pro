@@ -101,7 +101,7 @@ def state():
             "next_ping_in":  s["next_ping_in"],
             "paused":        s.get("paused", False),
             "uptime_pct":    s.get("uptime_pct", 100.0),
-            "history":       s.get("history", [])[-30:]
+            "history":       s.get("history", [])[-10:]
         } for s in websites])
 
 # Add monitor
@@ -174,7 +174,7 @@ def public_status():
             "status":     s["status"],
             "uptime_pct": s.get("uptime_pct", 100.0),
             "last_ping":  s["last_ping"],
-            "history":    s.get("history", [])[-30:],
+            "history":    s.get("history", [])[-10:],
             "paused":     s.get("paused", False)
         } for s in websites]
     return render_template("status.html", sites=data)

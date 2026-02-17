@@ -448,8 +448,17 @@
             justify-content: space-between;
         }
 
+        .countdown-time-big {
+            font-family: 'Space Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
         .countdown-track {
-            height: 3px;
+            height: 4px;
             background: var(--border);
             border-radius: 2px;
             overflow: hidden;
@@ -692,10 +701,11 @@
         }
 
         function historyBar(history) {
-            const segs = Array(30).fill('empty');
-            history.slice(-30).forEach((h, i) => { segs[i] = h.status; });
+            const last10 = history.slice(-10);
+            const segs = Array(10).fill('empty');
+            last10.forEach((h, i) => { segs[i] = h.status; });
             return segs.map((s, i) => {
-                const h = history.slice(-30)[i];
+                const h = last10[i];
                 const tip = h ? `${h.status}${h.ms ? ' · ' + h.ms + 'ms' : ''} @ ${h.time}` : 'No data';
                 return `<div class="hb-seg ${s}" title="${tip}"></div>`;
             }).join('');
@@ -737,13 +747,14 @@
           <div class="meta-item">🕐 Last ping: <span class="val last-val">${lastPingFmt(site)}</span></div>
         </div>
         <div class="card-bar">
-          <div class="bar-label"><span>Last 30 pings</span><span>${site.uptime_pct.toFixed(1)}% uptime</span></div>
+          <div class="bar-label"><span>Last 10 pings</span><span>${site.uptime_pct.toFixed(1)}% uptime</span></div>
           <div class="history-bar">${historyBar(site.history)}</div>
         </div>
         <div class="card-bottom">
           <div class="countdown-wrap">
-            <div class="countdown-label"><span>Next ping in</span><span class="cd-time">${site.paused ? 'Paused' : fmt(Math.max(0, site.next_ping_in))}</span></div>
-            <div class="countdown-track"><div class="countdown-fill" style="width:${pct}%;background:${cFill}"></div></div>
+            <div class="countdown-label"><span>Next ping in</span></div>
+            <div class="countdown-time-big cd-time">${site.paused ? 'Paused' : fmt(Math.max(0, site.next_ping_in))}</div>
+            <div class="countdown-track"><div class="countdown-fill" style="width:${Math.max(2, pct)}%;background:${cFill}"></div></div>
           </div>
           <div class="card-actions">
             <button class="btn-action btn-ping-now" onclick="manualPing(${site.id})">⚡ Ping</button>
@@ -766,7 +777,7 @@
                     el.querySelector('.history-bar').innerHTML = historyBar(site.history);
                     el.querySelector('.cd-time').textContent = site.paused ? 'Paused' : fmt(Math.max(0, site.next_ping_in));
                     const cf = el.querySelector('.countdown-fill');
-                    cf.style.width = pct + '%';
+                    cf.style.width = Math.max(2, pct) + '%';
                     cf.style.background = cFill;
                     const pb = el.querySelector('.btn-pt');
                     pb.className = `btn-action ${site.paused ? 'btn-resume' : 'btn-pause'} btn-pt`;
