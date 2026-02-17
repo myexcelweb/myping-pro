@@ -78,6 +78,7 @@
             <th>ID</th>
             <th>URL</th>
             <th>Status</th>
+            <th>Next Ping</th>
             <th>Action</th>
         </tr>
         {% for site in websites %}
@@ -85,6 +86,7 @@
             <td>{{ site.id }}</td>
             <td>{{ site.url }}</td>
             <td class="status checking">{{ site.status }}</td>
+            <td class="countdown">--:--</td>
             <td>
                 <button class="ping-btn">Ping</button>
                 <a href="/delete/{{ site.id }}"><button type="button">Delete</button></a>
@@ -94,11 +96,20 @@
     </table>
 
     <script>
-        // Function to ping a single website
+        // Ping interval in seconds
+        const PING_INTERVAL = 300; // 5 minutes
+        let timers = {};
+
+        // Initialize timers for each site
+        document.querySelectorAll("#websites-table tr[data-id]").forEach(row => {
+            const siteId = row.dataset.id;
+            timers[siteId] = PING_INTERVAL;
+        });
+
+        // Function to ping a website
         function pingSite(row) {
             const siteId = row.dataset.id;
             const statusCell = row.querySelector(".status");
-
             statusCell.innerText = "Checking...";
             statusCell.className = "status checking";
 
@@ -107,10 +118,12 @@
                 .then(data => {
                     statusCell.innerText = data.status;
                     statusCell.className = "status " + (data.status === "UP" ? "up" : "down");
+                    timers[siteId] = PING_INTERVAL; // reset countdown after ping
                 })
                 .catch(err => {
                     statusCell.innerText = "DOWN";
                     statusCell.className = "status down";
+                    timers[siteId] = PING_INTERVAL;
                 });
         }
 
@@ -122,12 +135,25 @@
             });
         });
 
-        // Optional: auto ping all websites every 1 minute
+        // Countdown timer and auto ping
         setInterval(() => {
             document.querySelectorAll("#websites-table tr[data-id]").forEach(row => {
-                pingSite(row);
+                const siteId = row.dataset.id;
+                const countdownCell = row.querySelector(".countdown");
+
+                if (!timers[siteId]) timers[siteId] = PING_INTERVAL;
+
+                timers[siteId]--;
+
+                let minutes = Math.floor(timers[siteId] / 60);
+                let seconds = timers[siteId] % 60;
+                countdownCell.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (timers[siteId] <= 0) {
+                    pingSite(row); // auto ping
+                }
             });
-        }, 60000); // 60000ms = 1 minute
+        }, 1000); // every 1 second
     </script>
 
 </body>
